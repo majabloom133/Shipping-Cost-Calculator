@@ -1,12 +1,10 @@
 package se.lexicon;
 
-import se.lexicon.calculator.ExpressInternationalShipping;
-import se.lexicon.calculator.StandardDomesticShipping;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
 import se.lexicon.model.Destination;
 import se.lexicon.model.ShippingRequest;
 import se.lexicon.model.Speed;
-import se.lexicon.service.ShippingCalculatorFactory;
-import se.lexicon.service.ShippingCostCalculator;
 import se.lexicon.service.ShippingService;
 
 import java.util.List;
@@ -14,17 +12,24 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) {
 
+        /* Old code
         // Manual object creation (composition root)
         List<ShippingCostCalculator> calculators = List.of(
                 new StandardDomesticShipping(),
                 new ExpressInternationalShipping()
         );
+        */
+
+        // 1. Start Spring Container and point to config clas
+        // Here Spring reads @ComponentScan and finds all the @Components
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
+
+        // 2. Ask Spring to give me the ShippingService bean
+        // No need to create factory or list of calculators, Spring does that instead.
+        ShippingService shippingService = context.getBean(ShippingService.class);
 
 
-        ShippingCalculatorFactory factory = new ShippingCalculatorFactory(calculators);
-        
-        ShippingService shippingService = new ShippingService(factory);
-
+        // --- Original code ---
         ShippingRequest domesticStandardRequest = new ShippingRequest(Destination.DOMESTIC, Speed.STANDARD, 10.0);
         System.out.println("Shipping cost: " + shippingService.quote(domesticStandardRequest));
 
@@ -36,5 +41,9 @@ public class Main {
 
         ShippingRequest heavyInternationalExpressRequest = new ShippingRequest(Destination.INTERNATIONAL, Speed.EXPRESS, 20.0);
         System.out.println("Shipping cost: " + shippingService.quote(heavyInternationalExpressRequest));
+
+        // Clean up + close Spring container
+        context.close();
+
     }
 }
